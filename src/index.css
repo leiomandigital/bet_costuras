@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Fundo #FAFAFA, texto #18181B, accent #1D4ED8 */
+    --background: 0 0% 98%;
+    --foreground: 240 10% 10%;
+
+    --primary: 217 83% 43%; /* #1D4ED8 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 142 61% 27%; /* #15803D */
+    --secondary-foreground: 0 0% 100%;
+
+    --accent: 217 83% 43%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 0 0% 100%;
+
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 40%;
+
+    --border: 240 6% 87%;
+    --input: 240 6% 87%;
+    --ring: 217 83% 43%;
+
+    --radius: 0.5rem;
+
+    /* Status: verde (finalizado/entregue), amarelo (em andamento), cinza (a produzir), vermelho (pendencia) */
+    --status-a-produzir: 240 4% 46%; /* cinza */
+    --status-em-andamento: 43 89% 38%; /* amarelo/laranja escuro para contraste AA */
+    --status-finalizado: 142 61% 27%; /* verde */
+    --status-aguardando-entrega: 217 83% 43%; /* azul */
+    --status-entregue: 142 61% 27%; /* verde */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground text-base;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+@layer utilities {
+  .touch-target {
+    @apply min-h-touch;
+  }
+
+  /* Esconde a barra de scroll (usado em navegação horizontal por abas no
+     celular) sem perder a rolagem por toque/swipe. */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Evita zoom automático do iOS Safari ao focar em inputs com font-size
+   menor que 16px — nossos inputs já usam text-base (16px), mas isso
+   protege contra regressões pontuais. */
+@supports (-webkit-touch-callout: none) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
