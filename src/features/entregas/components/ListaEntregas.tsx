@@ -50,21 +50,78 @@ export function ListaEntregas() {
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Pedido</TableHead>
-          <TableHead>Cliente</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Ação</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
+    <>
+      <div className="hidden sm:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Pedido</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Ação</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {pedidosEntrega.map((pedido) => (
+              <TableRow key={pedido.id}>
+                <TableCell className="font-medium">{pedido.numero_pedido}</TableCell>
+                <TableCell>{pedido.cliente?.nome ?? '—'}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant={
+                      pedido.status === 'entregue'
+                        ? 'entregue'
+                        : pedido.status === 'aguardando_entrega'
+                          ? 'aguardando-entrega'
+                          : 'finalizado'
+                    }
+                  >
+                    {STATUS_PEDIDO_LABEL[pedido.status]}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {pedido.status === 'finalizado' && (
+                    <Button
+                      size="sm"
+                      onClick={() => moverParaAguardandoEntrega(pedido.id)}
+                      disabled={atualizarPedido.isPending}
+                    >
+                      Mover para aguardando entrega
+                    </Button>
+                  )}
+                  {pedido.status === 'aguardando_entrega' && (
+                    <Button
+                      size="sm"
+                      onClick={() => marcarEntregue(pedido.id)}
+                      disabled={atualizarPedido.isPending}
+                    >
+                      Marcar como entregue
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+            {pedidosEntrega.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  Nenhum pedido pronto para entrega
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Celular: cartão com cliente + status e o botão de ação embaixo,
+          sem precisar de tabela/scroll horizontal. */}
+      <div className="sm:hidden space-y-2">
         {pedidosEntrega.map((pedido) => (
-          <TableRow key={pedido.id}>
-            <TableCell className="font-medium">{pedido.numero_pedido}</TableCell>
-            <TableCell>{pedido.cliente?.nome ?? '—'}</TableCell>
-            <TableCell>
+          <div key={pedido.id} className="rounded-md border border-border bg-background p-3 space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium truncate">{pedido.cliente?.nome ?? '—'}</p>
+                <p className="text-sm text-muted-foreground truncate">{pedido.numero_pedido}</p>
+              </div>
               <Badge
                 variant={
                   pedido.status === 'entregue'
@@ -73,40 +130,39 @@ export function ListaEntregas() {
                       ? 'aguardando-entrega'
                       : 'finalizado'
                 }
+                className="shrink-0"
               >
                 {STATUS_PEDIDO_LABEL[pedido.status]}
               </Badge>
-            </TableCell>
-            <TableCell>
-              {pedido.status === 'finalizado' && (
-                <Button
-                  size="sm"
-                  onClick={() => moverParaAguardandoEntrega(pedido.id)}
-                  disabled={atualizarPedido.isPending}
-                >
-                  Mover para aguardando entrega
-                </Button>
-              )}
-              {pedido.status === 'aguardando_entrega' && (
-                <Button
-                  size="sm"
-                  onClick={() => marcarEntregue(pedido.id)}
-                  disabled={atualizarPedido.isPending}
-                >
-                  Marcar como entregue
-                </Button>
-              )}
-            </TableCell>
-          </TableRow>
+            </div>
+            {pedido.status === 'finalizado' && (
+              <Button
+                size="sm"
+                className="w-full"
+                onClick={() => moverParaAguardandoEntrega(pedido.id)}
+                disabled={atualizarPedido.isPending}
+              >
+                Mover para aguardando entrega
+              </Button>
+            )}
+            {pedido.status === 'aguardando_entrega' && (
+              <Button
+                size="sm"
+                className="w-full"
+                onClick={() => marcarEntregue(pedido.id)}
+                disabled={atualizarPedido.isPending}
+              >
+                Marcar como entregue
+              </Button>
+            )}
+          </div>
         ))}
         {pedidosEntrega.length === 0 && (
-          <TableRow>
-            <TableCell colSpan={4} className="text-center text-muted-foreground">
-              Nenhum pedido pronto para entrega
-            </TableCell>
-          </TableRow>
+          <p className="text-center text-muted-foreground py-4">
+            Nenhum pedido pronto para entrega
+          </p>
         )}
-      </TableBody>
-    </Table>
+      </div>
+    </>
   )
 }

@@ -9,10 +9,13 @@ const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
 >(({ className, ...props }, ref) => (
+  // Ocupa a largura toda dividindo o espaço igualmente entre as abas (ver
+  // TabsTrigger com flex-1) em vez de rolar — assim um punhado de abas
+  // sempre cabe na tela do celular sem scroll horizontal.
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      'inline-flex h-auto items-center justify-start gap-2 rounded-md bg-muted p-1',
+      'flex h-auto w-full items-center justify-start gap-1 rounded-md bg-muted p-1',
       className
     )}
     {...props}
@@ -27,7 +30,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      'inline-flex min-h-touch items-center justify-center whitespace-nowrap rounded-sm px-3 py-2 text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm',
+      'flex-1 inline-flex min-h-touch items-center justify-center text-center leading-tight rounded-sm px-1.5 sm:px-3 py-2 text-xs sm:text-base font-medium text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm',
       className
     )}
     {...props}

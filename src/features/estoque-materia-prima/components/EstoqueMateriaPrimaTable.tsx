@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -208,6 +208,7 @@ export function EstoqueMateriaPrimaTable() {
   const excluirMateriaPrima = useExcluirMateriaPrima()
   const [dialogNovoAberto, setDialogNovoAberto] = React.useState(false)
   const [itemSaidaAtivo, setItemSaidaAtivo] = React.useState<MateriaPrima | null>(null)
+  const [itemDetalheAtivo, setItemDetalheAtivo] = React.useState<MateriaPrima | null>(null)
 
   async function handleExcluir(item: MateriaPrima) {
     if (!window.confirm(`Excluir a matéria-prima "${item.nome}"? Essa ação não pode ser desfeita.`)) {
@@ -234,7 +235,16 @@ export function EstoqueMateriaPrimaTable() {
       <div className="flex justify-end">
         <Dialog open={dialogNovoAberto} onOpenChange={setDialogNovoAberto}>
           <DialogTrigger asChild>
-            <Button>Nova matéria-prima</Button>
+            {/* Mesmo padrão dos outros "Novo X": círculo com "+" no
+                celular, texto no desktop. */}
+            <Button
+              size="icon"
+              className="rounded-full sm:rounded-md sm:h-10 sm:w-auto sm:px-4"
+              aria-label="Nova matéria-prima"
+            >
+              <Plus className="h-5 w-5 sm:h-4 sm:w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Nova matéria-prima</span>
+            </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -245,79 +255,178 @@ export function EstoqueMateriaPrimaTable() {
         </Dialog>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Quantidade</TableHead>
-            <TableHead>Unidade</TableHead>
-            <TableHead>Custo unitário</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {(materiaPrima ?? []).map((item) => (
-            <TableRow key={item.id}>
-              <TableCell className="font-medium">{item.nome}</TableCell>
-              <TableCell>{item.quantidade_disponivel}</TableCell>
-              <TableCell>{item.unidade_medida}</TableCell>
-              <TableCell>
-                {item.custo_unitario != null
-                  ? item.custo_unitario.toLocaleString('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    })
-                  : '—'}
-              </TableCell>
-              <TableCell>
-                {item.quantidade_disponivel < LIMITE_ESTOQUE_BAIXO && (
-                  <Badge variant="destructive">Estoque baixo</Badge>
-                )}
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Dialog
-                    open={itemSaidaAtivo?.id === item.id}
-                    onOpenChange={(open) => setItemSaidaAtivo(open ? item : null)}
-                  >
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
-                        Lançar saída
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Saída de estoque — {item.nome}</DialogTitle>
-                      </DialogHeader>
-                      <SaidaEstoqueForm
-                        materiaPrima={item}
-                        onSucesso={() => setItemSaidaAtivo(null)}
-                      />
-                    </DialogContent>
-                  </Dialog>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Excluir ${item.nome}`}
-                    onClick={() => handleExcluir(item)}
-                    disabled={excluirMateriaPrima.isPending}
-                  >
-                    <Trash2 className="h-5 w-5 text-destructive" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-          {(materiaPrima ?? []).length === 0 && (
+      <div className="hidden sm:block">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground">
-                Nenhuma matéria-prima cadastrada
-              </TableCell>
+              <TableHead>Nome</TableHead>
+              <TableHead>Quantidade</TableHead>
+              <TableHead>Unidade</TableHead>
+              <TableHead>Custo unitário</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Ações</TableHead>
             </TableRow>
+          </TableHeader>
+          <TableBody>
+            {(materiaPrima ?? []).map((item) => (
+              <TableRow key={item.id}>
+                <TableCell className="font-medium">{item.nome}</TableCell>
+                <TableCell>{item.quantidade_disponivel}</TableCell>
+                <TableCell>{item.unidade_medida}</TableCell>
+                <TableCell>
+                  {item.custo_unitario != null
+                    ? item.custo_unitario.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      })
+                    : '—'}
+                </TableCell>
+                <TableCell>
+                  {item.quantidade_disponivel < LIMITE_ESTOQUE_BAIXO && (
+                    <Badge variant="destructive">Estoque baixo</Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Dialog
+                      open={itemSaidaAtivo?.id === item.id}
+                      onOpenChange={(open) => setItemSaidaAtivo(open ? item : null)}
+                    >
+                      <DialogTrigger asChild>
+                        <Button size="sm" variant="outline">
+                          Lançar saída
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Saída de estoque — {item.nome}</DialogTitle>
+                        </DialogHeader>
+                        <SaidaEstoqueForm
+                          materiaPrima={item}
+                          onSucesso={() => setItemSaidaAtivo(null)}
+                        />
+                      </DialogContent>
+                    </Dialog>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Excluir ${item.nome}`}
+                      onClick={() => handleExcluir(item)}
+                      disabled={excluirMateriaPrima.isPending}
+                    >
+                      <Trash2 className="h-5 w-5 text-destructive" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {(materiaPrima ?? []).length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  Nenhuma matéria-prima cadastrada
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Celular: cartão com nome + status de estoque baixo — toque abre
+          detalhes com as ações (lançar saída / excluir). */}
+      <div className="sm:hidden space-y-2">
+        {(materiaPrima ?? []).map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setItemDetalheAtivo(item)}
+            className="w-full flex items-center justify-between gap-3 rounded-md border border-border bg-background p-3 text-left min-h-touch"
+          >
+            <div className="min-w-0">
+              <p className="font-medium truncate">{item.nome}</p>
+              <p className="text-sm text-muted-foreground truncate">
+                {item.quantidade_disponivel} {item.unidade_medida}
+              </p>
+            </div>
+            {item.quantidade_disponivel < LIMITE_ESTOQUE_BAIXO && (
+              <Badge variant="destructive" className="shrink-0">
+                Estoque baixo
+              </Badge>
+            )}
+          </button>
+        ))}
+        {(materiaPrima ?? []).length === 0 && (
+          <p className="text-center text-muted-foreground py-4">
+            Nenhuma matéria-prima cadastrada
+          </p>
+        )}
+      </div>
+
+      <Dialog
+        open={!!itemDetalheAtivo}
+        onOpenChange={(open) => !open && setItemDetalheAtivo(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{itemDetalheAtivo?.nome}</DialogTitle>
+          </DialogHeader>
+          {itemDetalheAtivo && (
+            <div className="space-y-4">
+              <div className="text-base space-y-1">
+                <p>
+                  Quantidade: {itemDetalheAtivo.quantidade_disponivel}{' '}
+                  {itemDetalheAtivo.unidade_medida}
+                </p>
+                <p>
+                  Custo unitário:{' '}
+                  {itemDetalheAtivo.custo_unitario != null
+                    ? itemDetalheAtivo.custo_unitario.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      })
+                    : '—'}
+                </p>
+              </div>
+
+              <Dialog
+                open={itemSaidaAtivo?.id === itemDetalheAtivo.id}
+                onOpenChange={(open) => setItemSaidaAtivo(open ? itemDetalheAtivo : null)}
+              >
+                <DialogTrigger asChild>
+                  <Button className="w-full" variant="outline">
+                    Lançar saída
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Saída de estoque — {itemDetalheAtivo.nome}</DialogTitle>
+                  </DialogHeader>
+                  <SaidaEstoqueForm
+                    materiaPrima={itemDetalheAtivo}
+                    onSucesso={() => {
+                      setItemSaidaAtivo(null)
+                      setItemDetalheAtivo(null)
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full text-destructive border-destructive hover:bg-destructive/10"
+                onClick={() => {
+                  handleExcluir(itemDetalheAtivo)
+                  setItemDetalheAtivo(null)
+                }}
+                disabled={excluirMateriaPrima.isPending}
+              >
+                <Trash2 className="h-4 w-4 mr-1.5" />
+                Excluir matéria-prima
+              </Button>
+            </div>
           )}
-        </TableBody>
-      </Table>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

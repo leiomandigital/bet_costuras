@@ -26,6 +26,7 @@ import type { ItemPedido, Pedido } from '../types/pedido.types'
 interface PedidoEditDialogProps {
   pedido: Pedido | null
   onClose: () => void
+  onExcluir?: (pedido: Pedido) => void
 }
 
 function ItemEditavel({ item, pedidoId }: { item: ItemPedido; pedidoId: string }) {
@@ -200,7 +201,7 @@ function AdicionarItemAoCarrinho({ pedidoId }: { pedidoId: string }) {
   )
 }
 
-export function PedidoEditDialog({ pedido, onClose }: PedidoEditDialogProps) {
+export function PedidoEditDialog({ pedido, onClose, onExcluir }: PedidoEditDialogProps) {
   const atualizarPedido = useAtualizarPedido()
 
   const [pago, setPago] = React.useState(false)
@@ -266,6 +267,21 @@ export function PedidoEditDialog({ pedido, onClose }: PedidoEditDialogProps) {
             >
               {atualizarPedido.isPending ? 'Salvando...' : 'Salvar observações e pagamento'}
             </Button>
+
+            {onExcluir && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full text-destructive border-destructive hover:bg-destructive/10"
+                onClick={() => {
+                  onExcluir(pedido)
+                  onClose()
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-1.5" />
+                Excluir pedido
+              </Button>
+            )}
           </div>
         )}
       </DialogContent>

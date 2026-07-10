@@ -44,6 +44,8 @@ interface ProdutoDialogProps {
   produto: ProdutoPronto | null
   aberto: boolean
   onOpenChange: (aberto: boolean) => void
+  onExcluir?: (produto: ProdutoPronto) => void
+  excluindo?: boolean
 }
 
 /**
@@ -51,7 +53,13 @@ interface ProdutoDialogProps {
  * mostra só os campos — a galeria de fotos aparece assim que o produto é
  * salvo, permitindo adicionar fotos na mesma sessão do cadastro.
  */
-export function ProdutoDialog({ produto, aberto, onOpenChange }: ProdutoDialogProps) {
+export function ProdutoDialog({
+  produto,
+  aberto,
+  onOpenChange,
+  onExcluir,
+  excluindo,
+}: ProdutoDialogProps) {
   const [produtoAtual, setProdutoAtual] = React.useState<ProdutoPronto | null>(produto)
 
   React.useEffect(() => {
@@ -101,13 +109,29 @@ export function ProdutoDialog({ produto, aberto, onOpenChange }: ProdutoDialogPr
 
     for (let i = 0; i < arquivos.length; i++) {
       try {
-        await adicionarFoto.mutateAsync({
+        const fotoCriada = await adicionarFoto.mutateAsync({
           produtoId: produtoAtual.id,
           categoria: produtoAtual.categoria,
           nomeProduto: produtoAtual.nome_produto,
           file: arquivos[i],
           marcarComoPrincipal: semFotoAinda && i === 0,
         })
+        // Atualiza a galeria na hora — não espera o refetch da lista de
+        // produtos (invalidateQueries) pra aparecer, já que esse dialog
+        // guarda seu próprio snapshot do produto em produtoAtual.
+        setProdutoAtual((atual) =>
+          atual
+            ? {
+                ...atual,
+                fotos: [
+                  ...(atual.fotos ?? []).map((f) =>
+                    fotoCriada.principal ? { ...f, principal: false } : f
+                  ),
+                  fotoCriada,
+                ],
+              }
+            : atual
+        )
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Falha ao enviar foto')
       }
@@ -121,6 +145,9 @@ export function ProdutoDialog({ produto, aberto, onOpenChange }: ProdutoDialogPr
     if (!foto) return
     try {
       await removerFoto.mutateAsync(foto)
+      setProdutoAtual((atual) =>
+        atual ? { ...atual, fotos: (atual.fotos ?? []).filter((f) => f.id !== fotoId) } : atual
+      )
       toast.success('Foto removida')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Falha ao remover foto')
@@ -131,6 +158,14 @@ export function ProdutoDialog({ produto, aberto, onOpenChange }: ProdutoDialogPr
     if (!produtoAtual) return
     try {
       await marcarPrincipal.mutateAsync({ fotoId, produtoId: produtoAtual.id })
+      setProdutoAtual((atual) =>
+        atual
+          ? {
+              ...atual,
+              fotos: (atual.fotos ?? []).map((f) => ({ ...f, principal: f.id === fotoId })),
+            }
+          : atual
+      )
       toast.success('Foto principal atualizada')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Falha ao definir foto principal')
@@ -284,6 +319,19 @@ export function ProdutoDialog({ produto, aberto, onOpenChange }: ProdutoDialogPr
               )}
             </div>
           </div>
+        )}
+
+        {produtoAtual && onExcluir && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full text-destructive border-destructive hover:bg-destructive/10"
+            onClick={() => onExcluir(produtoAtual)}
+            disabled={excluindo}
+          >
+            <Trash2 className="h-4 w-4 mr-1.5" />
+            Excluir produto
+          </Button>
         )}
       </DialogContent>
     </Dialog>

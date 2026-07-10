@@ -29,9 +29,11 @@ type ClienteFormValues = z.infer<typeof clienteFormSchema>
 interface ClienteFormProps {
   cliente?: Cliente | null
   onSucesso?: () => void
+  onExcluir?: () => void
+  excluindo?: boolean
 }
 
-export function ClienteForm({ cliente, onSucesso }: ClienteFormProps) {
+export function ClienteForm({ cliente, onSucesso, onExcluir, excluindo }: ClienteFormProps) {
   const form = useForm<ClienteFormValues>({
     resolver: zodResolver(clienteFormSchema),
     defaultValues: {
@@ -120,9 +122,26 @@ export function ClienteForm({ cliente, onSucesso }: ClienteFormProps) {
           )}
         />
 
-        <Button type="submit" size="lg" disabled={salvando}>
-          {salvando ? 'Salvando...' : cliente ? 'Salvar alterações' : 'Cadastrar cliente'}
-        </Button>
+        {onExcluir ? (
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 text-destructive border-destructive hover:bg-destructive/10"
+              onClick={onExcluir}
+              disabled={excluindo}
+            >
+              Excluir cliente
+            </Button>
+            <Button type="submit" className="flex-1" disabled={salvando}>
+              {salvando ? 'Salvando...' : 'Salvar alterações'}
+            </Button>
+          </div>
+        ) : (
+          <Button type="submit" size="lg" className="w-full" disabled={salvando}>
+            {salvando ? 'Salvando...' : cliente ? 'Salvar alterações' : 'Cadastrar cliente'}
+          </Button>
+        )}
       </form>
     </Form>
   )

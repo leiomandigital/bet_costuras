@@ -12,30 +12,12 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { usePedidos } from '../hooks/usePedidos'
 import { useExcluirPedido } from '../hooks/useExcluirPedido'
 import { PedidoEditDialog } from './PedidoEditDialog'
 import { PedidoForm } from './PedidoForm'
-import {
-  STATUS_PEDIDO_LABEL,
-  STATUS_PEDIDO_ORDEM,
-  type Pedido,
-  type StatusPedido,
-} from '../types/pedido.types'
+import { STATUS_PEDIDO_LABEL, type Pedido, type StatusPedido } from '../types/pedido.types'
 
 const STATUS_BADGE_VARIANT: Record<StatusPedido, string> = {
   a_produzir: 'a-produzir',
@@ -48,31 +30,23 @@ const STATUS_BADGE_VARIANT: Record<StatusPedido, string> = {
 export function PedidosTable() {
   const { data: pedidos, isLoading, isError, error } = usePedidos()
   const excluirPedido = useExcluirPedido()
-  const [filtroStatus, setFiltroStatus] = React.useState<StatusPedido | 'todos'>('todos')
-  const [filtroCliente, setFiltroCliente] = React.useState('')
-  const [filtroCategoria, setFiltroCategoria] = React.useState('')
+  const [busca, setBusca] = React.useState('')
   const [pedidoEditando, setPedidoEditando] = React.useState<Pedido | null>(null)
   const [dialogNovoAberto, setDialogNovoAberto] = React.useState(false)
 
   const pedidosFiltrados = React.useMemo(() => {
     if (!pedidos) return []
+    const termo = busca.trim().toLowerCase()
+    if (!termo) return pedidos
     return pedidos.filter((pedido) => {
-      if (filtroStatus !== 'todos' && pedido.status !== filtroStatus) return false
-      if (
-        filtroCliente &&
-        !pedido.cliente?.nome.toLowerCase().includes(filtroCliente.toLowerCase())
+      if (pedido.cliente?.nome.toLowerCase().includes(termo)) return true
+      return (pedido.itens ?? []).some(
+        (item) =>
+          item.categoria.toLowerCase().includes(termo) ||
+          item.nome_produto.toLowerCase().includes(termo)
       )
-        return false
-      if (
-        filtroCategoria &&
-        !pedido.itens?.some((item) =>
-          item.categoria.toLowerCase().includes(filtroCategoria.toLowerCase())
-        )
-      )
-        return false
-      return true
     })
-  }, [pedidos, filtroStatus, filtroCliente, filtroCategoria])
+  }, [pedidos, busca])
 
   async function handleExcluir(pedido: Pedido) {
     if (!window.confirm(`Excluir o pedido ${pedido.numero_pedido}? Essa ação não pode ser desfeita.`)) {
@@ -96,54 +70,43 @@ export function PedidosTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Dialog open={dialogNovoAberto} onOpenChange={setDialogNovoAberto}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-1" />
-              Novo pedido
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Novo pedido</DialogTitle>
-            </DialogHeader>
-            <PedidoForm onSucesso={() => setDialogNovoAberto(false)} />
-          </DialogContent>
-        </Dialog>
-      </div>
+      <Input
+        placeholder="Buscar por cliente, categoria ou produto"
+        value={busca}
+        onChange={(e) => setBusca(e.target.value)}
+      />
 
-      <div className="flex flex-wrap gap-3">
-        <Input
-          placeholder="Filtrar por cliente"
-          value={filtroCliente}
-          onChange={(e) => setFiltroCliente(e.target.value)}
-          className="max-w-xs"
-        />
-        <Input
-          placeholder="Filtrar por categoria"
-          value={filtroCategoria}
-          onChange={(e) => setFiltroCategoria(e.target.value)}
-          className="max-w-xs"
-        />
-        <Select
-          value={filtroStatus}
-          onValueChange={(v) => setFiltroStatus(v as StatusPedido | 'todos')}
+      {/* Dialog controlado — botão de abrir muda de lugar/forma conforme a
+          tela (topo no desktop, flutuante no canto no celular). */}
+      <Dialog open={dialogNovoAberto} onOpenChange={setDialogNovoAberto}>
+        <div className="hidden sm:flex justify-end">
+          <Button onClick={() => setDialogNovoAberto(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Novo pedido
+          </Button>
+        </div>
+
+        {/* Celular: botão flutuante fixo no canto inferior direito, acima
+            do menu do rodapé. */}
+        <Button
+          size="icon"
+          onClick={() => setDialogNovoAberto(true)}
+          aria-label="Novo pedido"
+          className="sm:hidden fixed bottom-20 right-4 z-30 h-14 w-14 rounded-full shadow-lg"
         >
-          <SelectTrigger className="max-w-xs">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os status</SelectItem>
-            {STATUS_PEDIDO_ORDEM.map((status) => (
-              <SelectItem key={status} value={status}>
-                {STATUS_PEDIDO_LABEL[status]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          <Plus className="h-6 w-6" />
+        </Button>
 
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Novo pedido</DialogTitle>
+          </DialogHeader>
+          <PedidoForm onSucesso={() => setDialogNovoAberto(false)} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Desktop: tabela completa. */}
+      <div className="hidden sm:block">
       <Table>
         <TableHeader>
           <TableRow>
@@ -212,8 +175,44 @@ export function PedidosTable() {
           )}
         </TableBody>
       </Table>
+      </div>
 
-      <PedidoEditDialog pedido={pedidoEditando} onClose={() => setPedidoEditando(null)} />
+      {/* Celular: lista de cartões só com cliente + status — toque abre o
+          modal com detalhes e ações (editar, excluir), evitando scroll
+          horizontal de tabela. */}
+      <div className="sm:hidden space-y-2">
+        {pedidosFiltrados.map((pedido: Pedido) => (
+          <button
+            key={pedido.id}
+            type="button"
+            onClick={() => setPedidoEditando(pedido)}
+            className="w-full flex items-center justify-between gap-3 rounded-md border border-border bg-background p-3 text-left min-h-touch"
+          >
+            <div className="min-w-0">
+              <p className="font-medium truncate">{pedido.cliente?.nome ?? '—'}</p>
+              <p className="text-sm text-muted-foreground truncate">
+                {pedido.numero_pedido} ·{' '}
+                {pedido.valor_total.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                })}
+              </p>
+            </div>
+            <Badge variant={STATUS_BADGE_VARIANT[pedido.status] as any} className="shrink-0">
+              {STATUS_PEDIDO_LABEL[pedido.status]}
+            </Badge>
+          </button>
+        ))}
+        {pedidosFiltrados.length === 0 && (
+          <p className="text-center text-muted-foreground py-4">Nenhum pedido encontrado</p>
+        )}
+      </div>
+
+      <PedidoEditDialog
+        pedido={pedidoEditando}
+        onClose={() => setPedidoEditando(null)}
+        onExcluir={handleExcluir}
+      />
     </div>
   )
 }

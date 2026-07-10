@@ -11,15 +11,24 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { LoginScreen } from '@/components/blocks/LoginScreen'
+import { InstallPwaButton } from '@/components/blocks/InstallPwaButton'
+import {
+  ClipboardList,
+  Hammer,
+  Users,
+  Wallet,
+  Package,
+  type LucideIcon,
+} from 'lucide-react'
 
 type Aba = 'pedidos' | 'producao' | 'clientes' | 'financeiro' | 'estoque'
 
-const ABAS: { id: Aba; label: string }[] = [
-  { id: 'pedidos', label: 'Pedidos' },
-  { id: 'producao', label: 'Produção' },
-  { id: 'clientes', label: 'Clientes' },
-  { id: 'financeiro', label: 'Financeiro' },
-  { id: 'estoque', label: 'Estoque' },
+const ABAS: { id: Aba; label: string; icone: LucideIcon }[] = [
+  { id: 'pedidos', label: 'Pedidos', icone: ClipboardList },
+  { id: 'producao', label: 'Produção', icone: Hammer },
+  { id: 'clientes', label: 'Clientes', icone: Users },
+  { id: 'financeiro', label: 'Financeiro', icone: Wallet },
+  { id: 'estoque', label: 'Estoque', icone: Package },
 ]
 
 // Navegação interna simples por estado — sem router, sem telas públicas
@@ -45,14 +54,17 @@ function App() {
       <header className="border-b border-border sticky top-0 z-40 bg-background">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-3">
           <h1 className="text-title-sm sm:text-title shrink-0">Bet Costuras</h1>
-          <Button variant="outline" size="sm" onClick={sair} className="shrink-0">
-            Sair
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <InstallPwaButton />
+            <Button variant="outline" size="sm" onClick={sair} className="shrink-0">
+              Sair
+            </Button>
+          </div>
         </div>
-        {/* Abas em linha única com scroll horizontal — evita quebra em
-            várias linhas e economiza espaço vertical no celular. */}
-        <nav className="overflow-x-auto scrollbar-hide border-t border-border">
-          <div className="mx-auto max-w-6xl px-4 flex items-center gap-2 py-2 min-w-max">
+        {/* No celular a navegação fica fixa no rodapé (nav abaixo); aqui só
+            aparece em telas maiores, em linha única. */}
+        <nav className="hidden sm:block border-t border-border">
+          <div className="mx-auto max-w-6xl px-4 flex items-center gap-2 py-2">
             {ABAS.map((aba) => (
               <Button
                 key={aba.id}
@@ -68,7 +80,7 @@ function App() {
         </nav>
       </header>
 
-      <main className="mx-auto max-w-6xl px-3 sm:px-4 py-4 sm:py-6">
+      <main className="mx-auto max-w-6xl px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-6">
         {abaAtiva === 'pedidos' && <PedidosTable />}
         {abaAtiva === 'producao' && <ProducaoPage />}
         {abaAtiva === 'clientes' && <ClientesTable />}
@@ -92,6 +104,33 @@ function App() {
           </Tabs>
         )}
       </main>
+
+      {/* Menu fixo no rodapé — só no celular. No desktop a navegação fica
+          no topo (nav acima). */}
+      <nav className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background">
+        <div className="grid grid-cols-5">
+          {ABAS.map((aba) => {
+            const Icone = aba.icone
+            const ativo = abaAtiva === aba.id
+            return (
+              <button
+                key={aba.id}
+                type="button"
+                onClick={() => setAbaAtiva(aba.id)}
+                className={cn(
+                  'flex flex-col items-center justify-center gap-0.5 py-2 min-h-touch',
+                  ativo ? 'text-primary' : 'text-muted-foreground'
+                )}
+              >
+                <Icone className="h-5 w-5" />
+                <span className={cn('text-[11px] leading-none', ativo && 'font-semibold')}>
+                  {aba.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </nav>
     </div>
   )
 }

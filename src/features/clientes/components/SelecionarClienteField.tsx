@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { toast } from 'sonner'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -56,7 +57,7 @@ export function SelecionarClienteField({ value, onChange }: SelecionarClienteFie
   return (
     <div className="flex gap-2">
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="flex-1">
+        <SelectTrigger className="flex-1 min-w-0">
           <SelectValue placeholder={isLoading ? 'Carregando clientes...' : 'Selecione o cliente'} />
         </SelectTrigger>
         <SelectContent>
@@ -69,8 +70,18 @@ export function SelecionarClienteField({ value, onChange }: SelecionarClienteFie
       </Select>
 
       <Dialog open={modalAberto} onOpenChange={setModalAberto}>
-        <Button type="button" variant="outline" onClick={() => setModalAberto(true)}>
-          Novo cliente
+        {/* No celular vira só um círculo com "+" pra não estourar a linha
+            (Select + botão de texto não cabiam lado a lado). */}
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="shrink-0 rounded-full sm:rounded-md sm:h-10 sm:w-auto sm:px-4"
+          onClick={() => setModalAberto(true)}
+          aria-label="Novo cliente"
+        >
+          <Plus className="h-5 w-5 sm:h-4 sm:w-4 sm:mr-1" />
+          <span className="hidden sm:inline">Novo cliente</span>
         </Button>
         <DialogContent>
           <DialogHeader>

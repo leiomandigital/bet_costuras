@@ -9,6 +9,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useFaturamentoMensal, useFluxoCaixa } from '../hooks/useFinanceiro'
+import { cn } from '@/lib/utils'
 
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -108,37 +109,76 @@ export function DashboardFinanceiro() {
 
       <div className="space-y-3">
         <h2 className="text-title-sm">Fluxo de caixa (últimos 30 registros)</h2>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Data</TableHead>
-              <TableHead>Entradas</TableHead>
-              <TableHead>Saídas</TableHead>
-              <TableHead>Saldo do dia</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {fluxoUltimos30Dias.map((dia) => (
-              <TableRow key={dia.data}>
-                <TableCell>{new Date(`${dia.data}T00:00:00`).toLocaleDateString('pt-BR')}</TableCell>
-                <TableCell>{formatarMoeda(dia.total_entradas)}</TableCell>
-                <TableCell>{formatarMoeda(dia.total_saidas)}</TableCell>
-                <TableCell
-                  className={dia.saldo_dia >= 0 ? 'text-status-finalizado' : 'text-destructive'}
-                >
-                  {formatarMoeda(dia.saldo_dia)}
-                </TableCell>
-              </TableRow>
-            ))}
-            {fluxoUltimos30Dias.length === 0 && (
+
+        <div className="hidden sm:block">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground">
-                  Nenhum lançamento de caixa registrado
-                </TableCell>
+                <TableHead>Data</TableHead>
+                <TableHead>Entradas</TableHead>
+                <TableHead>Saídas</TableHead>
+                <TableHead>Saldo do dia</TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {fluxoUltimos30Dias.map((dia) => (
+                <TableRow key={dia.data}>
+                  <TableCell>
+                    {new Date(`${dia.data}T00:00:00`).toLocaleDateString('pt-BR')}
+                  </TableCell>
+                  <TableCell>{formatarMoeda(dia.total_entradas)}</TableCell>
+                  <TableCell>{formatarMoeda(dia.total_saidas)}</TableCell>
+                  <TableCell
+                    className={dia.saldo_dia >= 0 ? 'text-status-finalizado' : 'text-destructive'}
+                  >
+                    {formatarMoeda(dia.saldo_dia)}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {fluxoUltimos30Dias.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    Nenhum lançamento de caixa registrado
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Celular: cartão com data + saldo em destaque, entradas/saídas
+            como subtexto — sem tabela larga. */}
+        <div className="sm:hidden space-y-2">
+          {fluxoUltimos30Dias.map((dia) => (
+            <div
+              key={dia.data}
+              className="flex items-center justify-between gap-3 rounded-md border border-border bg-background p-3"
+            >
+              <div className="min-w-0">
+                <p className="font-medium">
+                  {new Date(`${dia.data}T00:00:00`).toLocaleDateString('pt-BR')}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Entradas {formatarMoeda(dia.total_entradas)} · Saídas{' '}
+                  {formatarMoeda(dia.total_saidas)}
+                </p>
+              </div>
+              <p
+                className={cn(
+                  'font-semibold shrink-0',
+                  dia.saldo_dia >= 0 ? 'text-status-finalizado' : 'text-destructive'
+                )}
+              >
+                {formatarMoeda(dia.saldo_dia)}
+              </p>
+            </div>
+          ))}
+          {fluxoUltimos30Dias.length === 0 && (
+            <p className="text-center text-muted-foreground py-4">
+              Nenhum lançamento de caixa registrado
+            </p>
+          )}
+        </div>
       </div>
     </div>
   )
